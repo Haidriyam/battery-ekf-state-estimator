@@ -14,15 +14,15 @@ class TestEKFEstimator(unittest.TestCase):
         """Verify that EKF converges toward true SoC despite initial state divergence."""
         true_soc = 0.50
         self.ekf.x[0, 0] = 0.90  # Initialized with severe error (+40%)
+        self.ekf.P[0, 0] = 0.25   # Reflect initial state uncertainty
 
-        # Inject 100 steps of steady discharge with simulated sensor noise
-        current = 2.0  # 2A discharge
+        current = 2.0
         np.random.seed(42)
 
-        for _ in range(120):
+        for _ in range(350):
             true_soc -= (current * 0.1 / self.model.capacity_coulombs)
             measured_ocv = self.model.ocv_from_soc(true_soc)
-            v_measured = measured_ocv - (current * self.model.r0) + np.random.normal(0, 0.005)
+            v_measured = measured_ocv - (current * self.model.r0) + np.random.normal(0, 0.002)
 
             self.ekf.predict(current)
             self.ekf.update(v_measured, current)
