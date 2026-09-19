@@ -13,12 +13,12 @@ class ExtendedKalmanFilterBMS:
         # State vector: [SoC, V_rc]^T
         self.x = np.array([[0.80], [0.0]], dtype=np.float64)
 
-        # State error covariance
-        self.P = np.diag([1e-4, 1e-4])
+        # Initial covariance: reflect higher initial uncertainty on SoC
+        self.P = np.diag([0.25, 1e-4])
 
         # Process noise covariance (Q) and measurement noise variance (R)
         self.Q = np.diag([1e-6, 1e-5])
-        self.R = np.array([[0.01]])  # ~10mV voltage sensor uncertainty
+        self.R = np.array([[0.005]])
 
     def predict(self, current: float):
         """Time update: propagate state and covariance through discretized dynamics."""
@@ -57,6 +57,6 @@ class ExtendedKalmanFilterBMS:
 
         # State and covariance correction
         self.x = self.x + K * residual
-        self.x[0, 0] = np.clip(self.x[0, 0], 0.0, 1.0)  # Bound SoC strictly within [0, 1]
+        self.x[0, 0] = np.clip(self.x[0, 0], 0.0, 1.0)
         I_mat = np.eye(2)
         self.P = (I_mat - K @ H) @ self.P
