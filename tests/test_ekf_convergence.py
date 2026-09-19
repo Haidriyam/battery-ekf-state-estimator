@@ -22,7 +22,8 @@ class TestEKFEstimator(unittest.TestCase):
         for _ in range(250):
             true_soc -= (current * 0.1 / self.model.capacity_coulombs)
             measured_ocv = self.model.ocv_from_soc(true_soc)
-            v_measured = measured_ocv - (current * self.model.r0) + float(np.random.normal(0, 0.001))
+            noise = float(np.random.normal(0, 0.001))
+            v_measured = measured_ocv - (current * self.model.r0) + noise
 
             self.ekf.predict(current)
             self.ekf.update(v_measured, current)
