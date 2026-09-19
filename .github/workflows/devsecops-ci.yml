@@ -1,0 +1,35 @@
+name: BMS State Estimator CI
+
+on: [push, pull_request]
+
+jobs:
+  validate-and-secure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest -r requirements.txt
+
+      - name: SAST Security Audit (Bandit)
+        run: |
+          bandit -r src/ -ll
+
+      - name: Enforce Style Hygiene (Flake8)
+        run: |
+          flake8 src/ tests/ --count --ignore=W292 --max-line-length=100 --statistics
+
+      - name: Run EKF Convergence & CAN Fuzzing Test Suite
+        run: |
+          PYTHONPATH=. pytest tests/ -v
+
+      - name: Build Container Image
+        run: |
+          docker build -t bms-ekf-estimator:latest .
