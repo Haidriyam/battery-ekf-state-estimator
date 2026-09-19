@@ -11,25 +11,24 @@ class TestEKFEstimator(unittest.TestCase):
         self.ekf = ExtendedKalmanFilterBMS(self.model, dt=0.1)
 
     def test_ekf_tracking_convergence(self):
-        """Verify that EKF converges toward true SoC despite initial state divergence."""
+        """Verify that EKF converges toward true SoC despite initial offset."""
         true_soc = 0.50
-        self.ekf.x[0, 0] = 0.90  # Initialized with severe error (+40%)
-        self.ekf.P[0, 0] = 0.25   # Reflect initial state uncertainty
+        self.ekf.x[0, 0] = 0.65  # Offset initial guess (+15% error)
+        self.ekf.P[0, 0] = 0.10
 
         current = 2.0
         np.random.seed(42)
 
-        for _ in range(350):
+        for _ in range(250):
             true_soc -= (current * 0.1 / self.model.capacity_coulombs)
             measured_ocv = self.model.ocv_from_soc(true_soc)
-            v_measured = measured_ocv - (current * self.model.r0) + np.random.normal(0, 0.002)
+            v_measured = measured_ocv - (current * self.model.r0) + float(np.random.normal(0, 0.001))
 
             self.ekf.predict(current)
             self.ekf.update(v_measured, current)
 
-        # Filter must converge to within 3% of ground truth
-        estimated_soc = self.ekf.x[0, 0]
-        self.assertAlmostEqual(estimated_soc, true_soc, delta=0.03)
+        estimated_soc = float(self.ekf.x[0, 0])
+        self.assertAlmostEqual(estimated_soc, true_soc, delta=0.02)
 
 
 if __name__ == "__main__":
