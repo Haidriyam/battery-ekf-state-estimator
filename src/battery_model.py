@@ -20,15 +20,12 @@ class LiIonCellModel:
         self.tau = r1 * c1
 
     def ocv_from_soc(self, soc: float) -> float:
-        """Empirical polynomial approximation of Open Circuit Voltage (OCV vs SoC)."""
-        soc_clamped = np.clip(soc, 0.0, 1.0)
-        # 6th-order empirical fit for standard NMC chemistry
-        coeffs = [3.0, 1.5, -2.1, 4.2, -4.5, 2.1, 0.0]
-        return float(np.polyval(coeffs, soc_clamped))
+        """Standard NMC Open Circuit Voltage (OCV vs SoC) piecewise/linear fit."""
+        s = float(np.clip(soc, 0.0, 1.0))
+        # Maps 0.0 SoC -> 3.20V and 1.0 SoC -> 4.20V with realistic curvature
+        return 3.20 + 0.85 * s + 0.15 * (s ** 2)
 
     def ocv_derivative(self, soc: float) -> float:
-        """Analytical derivative d(OCV)/d(SoC) required for EKF measurement Jacobian."""
-        soc_clamped = np.clip(soc, 0.0, 1.0)
-        coeffs = [3.0, 1.5, -2.1, 4.2, -4.5, 2.1, 0.0]
-        d_coeffs = np.polyder(coeffs)
-        return float(np.polyval(d_coeffs, soc_clamped))
+        """Analytical derivative d(OCV)/d(SoC) for EKF measurement Jacobian."""
+        s = float(np.clip(soc, 0.0, 1.0))
+        return 0.85 + 0.30 * s
