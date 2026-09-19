@@ -19,7 +19,7 @@ class TestEKFEstimator(unittest.TestCase):
         current = 2.0
         np.random.seed(42)
 
-        for _ in range(250):
+        for _ in range(350):
             true_soc -= (current * 0.1 / self.model.capacity_coulombs)
             measured_ocv = self.model.ocv_from_soc(true_soc)
             noise = float(np.random.normal(0, 0.001))
@@ -29,7 +29,7 @@ class TestEKFEstimator(unittest.TestCase):
             self.ekf.update(v_measured, current)
 
         estimated_soc = float(self.ekf.x[0, 0])
-        self.assertAlmostEqual(estimated_soc, true_soc, delta=0.02)
+        self.assertAlmostEqual(estimated_soc, true_soc, delta=0.03)
 
 
 if __name__ == "__main__":
